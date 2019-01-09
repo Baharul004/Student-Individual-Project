@@ -1,0 +1,20 @@
+name: kamailio
+summary: <Fill in summary here>
+maintainer: root <root@bahar>
+description: |
+  <Multi-line description here>
+tags:
+  # Replace "misc" with one or more whitelisted tags from this list:
+  # https://jujucharms.com/docs/stable/authors-charm-metadata
+  - misc
+#subordinate: false
+#provides:
+#  provides-relation:
+#    interface: interface-name
+requires:
+  database:
+    interface: mysql-root
+
+#peers:
+#  peer-relation:
+#    interface: interface-name

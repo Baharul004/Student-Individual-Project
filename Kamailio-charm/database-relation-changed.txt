@@ -1,0 +1,62 @@
+#!/bin/bash
+set -e
+# This must be renamed to the name of the relation. The goal here is to
+# affect any change needed by relationships being formed, modified, or broken
+# This script should be idempotent.
+juju-log $JUJU_REMOTE_UNIT modified its settings
+juju-log "KAM-NEW: database-relation-changed!"
+juju-log $JUJU_REMOTE_UNIT modified its settings
+juju-log "KAM-NEW: database-relation-changed!"
+db_user=$(relation-get user)
+db_db=$(relation-get database)
+db_pass=$(relation-get password)
+db_host=$(relation-get private-address)
+kam_host=$(hostname --ip-address )
+juju-log "KAM-NEW: kam_host = $kam_host"
+juju-log "KAM-NEW: db_user = $db_user"
+juju-log "KAM-NEW: db_pass = $db_pass"
+juju-log "KAM-NEW: db_host = $db_host"
+juju-log "KAM-NEW: db_db = $db_db"
+
+if [ -z "$db_db" ]; then
+        juju-log "No database information sent "
+        exit 0
+fi
+
+if grep -q '#!define WITH_MYSQL' /etc/kamailio/kamailio.cfg
+then
+         exit 0
+else
+
+        sed -i '2i#!define WITH_MYSQL' /etc/kamailio/kamailio.cfg
+        sed -i '3i#!define WITH_AUTH' /etc/kamailio/kamailio.cfg
+        sed -i '4i#!define WITH_USRLOCDB' /etc/kamailio/kamailio.cfg
+fi
+
+
+sed -i "s/#\ DBENGINE.*/ DBENGINE=MYSQL/g" /etc/kamailio/kamctlrc
+sed -i "s/#\!define DBURL.*/#\!define DBURL \"mysql:\/\/kamailio:kamailiorw@${db_host}\/kamailio\"/g" /etc/kamailio/kamailio.cfg
+
+sed -i "s/#\ DBHOST.*/ DBHOST=${db_host}/g" /etc/kamailio/kamctlrc
+sed -i "s/#\ DBPORT.*/ DBPORT=3306/g" /etc/kamailio/kamctlrc
+
+sed -i "s/#\ DBRWUSER=.*/ DBRWUSER=kamailio/g" /etc/kamailio/kamctlrc
+sed -i "s/#\ DBRWPW=.*/ DBRWPW=kamailiorw/g" /etc/kamailio/kamctlrc
+
+sed -i "s/#\ DBACCESSHOST=.*/ DBACCESSHOST=${kam_host}/g" /etc/kamailio/kamctlrc
+
+sed -i "s/#\ DBROOTUSER=.*/ DBROOTUSER=${db_user}/g" /etc/kamailio/kamctlrc
+sed -i "s/#\ DBROOTPW=.*/ DBROOTPW=${db_pass}/g" /etc/kamailio/kamctlrc
+sed -i "s/#\ INSTALL_EXTRA.*/ INSTALL_EXTRA_TABLES=yes/g" /etc/kamailio/kamctlrc
+sed -i "s/#\ INSTALL_PRESENC.*/ INSTALL_PRESENCE_TABLES=yes/g" /etc/kamailio/kamctlrc
+sed -i "s/#\ INSTALL_DBUID.*/ INSTALL_DBUID_TABLES=no/g" /etc/kamailio/kamctlrc
+
+chmod -R 777 /etc/kamailio/kamailio.cfg
+chmod -R 777 /etc/kamailio/kamctlrc 
+
+kamdbctl create   
+
+juju-log "waiting for port activation"
+status-set active
+open-port 5060/udp
+reboot

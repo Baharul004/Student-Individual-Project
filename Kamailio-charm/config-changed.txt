@@ -1,0 +1,20 @@
+#!/bin/bash
+# config-changed occurs everytime a new configuration value is updated (juju set)
+juju-log "KAM-NEW: config-changed!"
+host_ip=$(config-get host-addresses)
+
+juju-log "Received config: ip-addresses = $host_ip"
+
+
+if grep -q 'advertised_address' /etc/kamailio/kamailio.cfg
+then
+         exit 0
+else
+
+        sed -i "5iadvertised_address=${host_ip}" /etc/kamailio/kamailio.cfg
+        sed -i "6ialias=${host_ip}" /etc/kamailio/kamailio.cfg
+        killall kamailio
+        kamailio
+fi
+
+sed -i "s/#\ listen.*/ listen=eth0:5060 advertise ${host_ip}:5060/g" /etc/kamailio/kamailio.cfg

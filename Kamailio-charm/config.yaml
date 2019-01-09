@@ -1,0 +1,17 @@
+options:
+  network-interfaces:
+    type: string
+    default: enp0s3
+    description: "A short description of the configuration option"
+  host-addresses:
+    type: string
+    default:
+    description: "A short description of the configuration option"
+  boolean-option:
+    type: boolean
+    default: true
+    description: "A short description of the configuration option"
+  port:
+    type: int
+    default:
+    description: "A short description of the configuration option"

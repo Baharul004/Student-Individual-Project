@@ -1,0 +1,8 @@
+#!/bin/bash
+# This must be renamed to the name of the relation. The goal here is to
+# affect any change needed by relationships being formed
+# This script should be idempotent.
+juju-log $JUJU_REMOTE_UNIT joined
+juju-log "KAM-NEW: database-relation-joined!"
+
+#relation-set hostname='unit-get 10.93.63.165' port=5060
